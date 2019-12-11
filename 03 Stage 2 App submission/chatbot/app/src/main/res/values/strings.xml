@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">chatbot</string>
+    <string name="tts_no_engines">no engine</string>
+    <string name="thanku">thank you for your response</string>
+    <string name="errordevicenotsupport">Your Device Don\'t Support Speech Input</string>
+    <string name="google">Google Assitant With Dialogflow</string>
+    <string name="normalSpeech">Click to take take voice input.</string>
+    <string name="googleBtn">Assistant</string>
+    <string name="normalSpeechBtn">Speech</string>
+    <string name="selectProject">Select The Project to Take Data</string>
+    <string name="enterFields">Enter the following fields</string>
+</resources>
