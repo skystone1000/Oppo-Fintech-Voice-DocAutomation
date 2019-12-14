@@ -5,24 +5,33 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 import static android.widget.Toast.LENGTH_LONG;
 import static android.widget.Toast.makeText;
+import static com.google.android.gms.common.internal.safeparcel.SafeParcelable.NULL;
 
 public class UserSpeechActivity extends AppCompatActivity {
 
@@ -30,6 +39,15 @@ public class UserSpeechActivity extends AppCompatActivity {
     private TextToSpeech tts;
     private SpeechRecognizer speechRecog;
     private static int count = 0;
+    public EditText name;
+    public EditText age;
+    public EditText income;
+    public DatabaseReference databaseArtists;
+    public static String username;
+    public static String userage;
+
+    public static String userdob;
+    public static String userincome;
 
 
     @Override
@@ -37,6 +55,14 @@ public class UserSpeechActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_userspeech);
 
+        //getting the reference of artists node
+
+        databaseArtists = FirebaseDatabase.getInstance().getReference("artists");
+        name = (EditText) findViewById(R.id.name);
+        age = (EditText) findViewById(R.id.age);
+        income = (EditText) findViewById(R.id.income);
+        //list to store artists
+        List artists = new ArrayList<>();
 
         // Get the Intent that started this activity and extract the string
         Intent intent = getIntent();
@@ -67,7 +93,8 @@ public class UserSpeechActivity extends AppCompatActivity {
                         // app-defined int constant. The callback method gets the
                         // result of the request.
                     }
-                } else {
+                }
+                else {
                     // Permission has already been granted
                     Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
                     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -75,17 +102,18 @@ public class UserSpeechActivity extends AppCompatActivity {
                     speechRecog.startListening(intent);
 
                 }
-                Log.d("tag","onclick listening to speaker");
+                Log.d("tag", "onclick listening to speaker");
 
             }
         });
+        Log.d("tag", "on create");
+
 
         initializeTextToSpeech();
         initializeSpeechRecognizer();
-        Log.d("tag","on create");
+
 
     }
-
 
 
     private void initializeTextToSpeech() {
@@ -97,11 +125,11 @@ public class UserSpeechActivity extends AppCompatActivity {
                     finish();
                 } else {
                     tts.setLanguage(Locale.US);
-                    speak("Hello there, I am ready to start our conversation, i will be asking questions, please provide the answers, first question, is what is your name ?");
+                    speak("Hello there, Lets start filling our form, i will be asking questions, please provide the answers, ,first question, is what is your name ?");
                 }
             }
         });
-        Log.d("tag","initialize text to speech");
+        Log.d("tag", "initialize text to speech");
     }
 
 
@@ -154,14 +182,14 @@ public class UserSpeechActivity extends AppCompatActivity {
 
                 }
             });
-            Log.d("tag","initializeSpeechRecognizer");
+            Log.d("tag", "initializeSpeechRecognizer");
         }
     }
 
 
     private void processResult(String result_message) {
         result_message = result_message.toLowerCase();
-        Log.d("tag","on process results");
+        Log.d("tag", "on process results");
 //        Handle at least four sample cases
 
 //        First: What is your Name?
@@ -169,21 +197,26 @@ public class UserSpeechActivity extends AppCompatActivity {
 //        Third: Is the earth flat or a sphere?
 //        Fourth: Open a browser and open url
         if (count == 0) {
+
             if (result_message.indexOf("my") != -1) {
                 if (result_message.indexOf("name") != -1) {
 
                     speak("okay next question is.");
                     count = count + 1;
+                    username = result_message;
+                    Log.d("this is my array", "arr: " + result_message);
                     speak("what is your age in years now");
+                    Log.d("tag", "username" + username);
                 }
             }
-            Log.d("tag","count set to 1");
+            Log.d("tag", "count set to 1");
         }
         if (count == 1) {
             if (result_message.indexOf("my") != -1) {
                 if (result_message.indexOf("age") != -1) {
                     speak("okay next question is.");
                     count = count + 1;
+                    userage = result_message;
                     speak("what is your date of birth now");
                 }
             }
@@ -193,18 +226,21 @@ public class UserSpeechActivity extends AppCompatActivity {
                 if (result_message.indexOf("date of birth") != -1) {
                     speak("okay next question is");
                     count = count + 1;
+                    userdob = result_message;
                     speak("what is your annual income");
                 }
             }
         }
-        if(count ==3){
+        if (count == 3) {
             if (result_message.indexOf("my") != -1) {
                 if (result_message.indexOf("income") != -1) {
+                    userincome = result_message;
                     speak("thank you for your response");
                     count = 0;
 
                 }
-            }}
+            }
+        }
 
 
     }
@@ -216,27 +252,62 @@ public class UserSpeechActivity extends AppCompatActivity {
         } else {
             tts.speak(message, TextToSpeech.QUEUE_FLUSH, null);
         }
-        Log.d("tag","speaking");
+        Log.d("tag", "speaking");
     }
 
     @Override
     protected void onPause() {
-        super.onPause();
         speak("please give the answer for the question");
         tts.shutdown();
-        Log.d("tag","on pause");
+        addArtist();
+        super.onPause();
+
+        username = NULL;
+        userage = NULL;
+        userdob = NULL;
+        userincome = NULL;
+        Log.d("tag", "on pause");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 //        Reinitialize the recognizer and tts engines upon resuming from background such as after openning the browser
-        initializeTextToSpeech();
-        initializeSpeechRecognizer();
-        Log.d("tag","onResume");
+
+        Log.d("tag", "onResume");
 
     }
 
+    /*
+     * This method is saving a new artist to the
+     * Firebase Realtime Database
+     * */
+    private void addArtist() {
+        //checking if the value is provided
+        if (!TextUtils.isEmpty(username)) {
+
+            //getting a unique id using push().getKey() method
+            //it will create a unique id and we will use it as the Primary Key for our Artist
+            String id = databaseArtists.push().getKey();
+
+            //creating an Artist Object
+            Artist artist = new Artist(id, username, userage, userdob, userincome);
+
+            //Saving the Artist
+            databaseArtists.child(id).setValue(artist);
+
+            //setting edittext to blank again
+
+
+            //displaying a success toast
+            Toast.makeText(this, "NEW USER IS CREATED", Toast.LENGTH_LONG).show();
+        }
+        else {
+            //if the value is not given displaying a toast
+            Toast.makeText(this, "Please enter a information for the loan through voice input", Toast.LENGTH_LONG).show();
+        }
+        Log.d("tag", "firebaseuseraddition");
+    }
 
 }
 
