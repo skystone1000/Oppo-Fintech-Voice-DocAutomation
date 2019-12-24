@@ -1,0 +1,16 @@
+THINGS to read for Android and multi Threading
+
+For solving the problem of async call of text to speech
+
+
+handlers and loopers
+callback hell
+promise (handling call backs)
+rxjava reactive string
+thread poll executer 
+executer service
+java.concurrent
+
+
+
+text to speech library android github
